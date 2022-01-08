@@ -54,34 +54,39 @@ app.post("/api/users/:_id/exercises", async (req, res) => {
   const { description, date, duration } = req.body;
   const newDate = new Date(date).toDateString();
 
-  const findId = await USER.findById(_id);
-
-  if (!findId) {
-    return res.json({
-      error: "User not Found",
-    });
-  } else {
-    try {
+  USER.findById(_id, (err, user)=>{
+    if (err || !user) {
+      return res.json({
+        error: 'User not found'
+      })
+    } else {
       const newExerc = new TRACK({
-        username: findId.username,
-        description: description,
-        duration: duration,
+        username: user.username,
+        description,
+        duration,
         date: newDate,
-        userId: findId._id,
+        userId: user._id,
       });
-      newExerc.save();
-      console.log(newExerc);
-      return res.send({
-        username: findId.username,
-        description: description,
-        duration: duration,
-        date: newDate,
-        userId: findId._id,
-      });
-    } catch (e) {
-      console.log("error ,", e);
+///
+      newExerc.save ((err,data) => {
+        if (err || !data) {
+          res.json({
+            error: 'There was an error saving this message'
+          })
+        } else {
+          const {description,duration,date} = data;
+          return res.json( {
+            username: user.username,
+             description,
+             duration,
+             date,
+             userId: user._id
+          })
+        }
+      })
     }
-  }
+  });
+
 });
 
 app.get("/api/users", async (req, res) => {
